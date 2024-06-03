@@ -3,9 +3,13 @@ from quantumojo.potential import HarmonicOscillator
 from quantumojo.vector import Vector
 from quantumojo.plot import plot
 
+from time import sleep, time_function, now
+import benchmark
+
 
 fn main() raises -> None:
-    alias N = 2**10 + 1
+    # alias N = 2**10 + 1
+    alias N = 2**25 + 1
     alias D = DType.float64
 
     alias mass = 1.0 * electron_mass
@@ -27,9 +31,10 @@ fn main() raises -> None:
 
     var z = Vector[D, N].linspace(-5 * length_scale, 5 * length_scale)
 
-    #     print("z (pm)", z / (pico * meter))
-    #     print("z (scale)", z / length_scale)
+    var t = now()
+    var energy = potential.potential_energy(z, 0)
+    var duration = now() - t
+    print("Duration (ms):", duration / 1000000)
+    print(energy[0])
 
-    plot(z / length_scale, potential.potential_energy(z, 0) / electron_volt, "qho.png")
-
-    print("done")
+    # plot(z / length_scale, potential.potential_energy(z, 0) / electron_volt, "qho.png")

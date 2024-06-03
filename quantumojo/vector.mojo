@@ -1,10 +1,13 @@
 from math import sqrt
 from memory import memset, memset_zero, memcpy
+from algorithm import vectorize
 
 
 @value
 struct Vector[D: DType, N: Int](Sized, Stringable):
     var data: DTypePointer[D]
+    alias nelts = simdwidthof[D]() * 2
+    # alias nelts = 1
 
     fn __init__(inout self):
         self.data = DTypePointer[D].alloc(N)
@@ -70,11 +73,14 @@ struct Vector[D: DType, N: Int](Sized, Stringable):
 
     fn __add__(self, other: Scalar[D]) -> Vector[D, N]:
         var result = Vector[D, N]()
-        for i in range(N):
-            result[i] = self[i] + other
+        @parameter
+        fn func_item[nelts: Int](i: Int):
+            result.data.store[width=nelts](i, self.data.load[width=nelts](i) + other)
+        vectorize[func_item, Self.nelts, size = N]()
+
         return result
 
-    fn __add__(self, inout other: Vector[D, N]) -> Vector[D, N]:
+    fn __add__(self, other: Vector[D, N]) -> Vector[D, N]:
         # TODO: Why does other need to be inout?
         var result = Vector[D, N]()
         for i in range(N):
@@ -83,8 +89,10 @@ struct Vector[D: DType, N: Int](Sized, Stringable):
 
     fn __sub__(self, other: Scalar[D]) -> Vector[D, N]:
         var result = Vector[D, N]()
-        for i in range(N):
-            result[i] = self[i] - other
+        @parameter
+        fn func_item[nelts: Int](i: Int):
+            result.data.store[width=nelts](i, self.data.load[width=nelts](i) - other)
+        vectorize[func_item, Self.nelts, size = N]()
         return result
 
     fn __sub__(self, other: Vector[D, N]) -> Vector[D, N]:
@@ -95,8 +103,10 @@ struct Vector[D: DType, N: Int](Sized, Stringable):
 
     fn __mul__(self, other: Scalar[D]) -> Vector[D, N]:
         var result = Vector[D, N]()
-        for i in range(N):
-            result[i] = self[i] * other
+        @parameter
+        fn func_item[nelts: Int](i: Int):
+            result.data.store[width=nelts](i, self.data.load[width=nelts](i) * other)
+        vectorize[func_item, Self.nelts, size = N]()
         return result
 
     fn __mul__(self, other: Vector[D]) -> Vector[D, N]:
@@ -110,8 +120,10 @@ struct Vector[D: DType, N: Int](Sized, Stringable):
 
     fn __pow__(self, other: Scalar[D]) -> Vector[D, N]:
         var result = Vector[D, N]()
-        for i in range(N):
-            result[i] = self[i] ** other
+        @parameter
+        fn func_item[nelts: Int](i: Int):
+            result.data.store[width=nelts](i, self.data.load[width=nelts](i) ** other)
+        vectorize[func_item, Self.nelts, size = N]()
         return result
 
     fn __truediv__(self, other: Scalar[D]) -> Vector[D, N]:
